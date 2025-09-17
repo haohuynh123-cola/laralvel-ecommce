@@ -2,25 +2,44 @@
 
 namespace App\Repositories;
 
-use App\Support\Query\QueryBuilderTrait;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 
 class UserRepository extends BaseRepository
 {
-    use QueryBuilderTrait;
 
     protected string $model = \App\Models\User::class;
 
-    public function paginateWithRequest(Request $request, int $perPage = 15): LengthAwarePaginator
+    public function getListUser(array $query, int $perPage = 15): LengthAwarePaginator
     {
-        $query = $this->applyCommonQueryScopes(
-            $this->query(),
-            $request,
-            allowedFilters: ['id', 'name', 'email'],
-            allowedSorts: ['id', 'name', 'email', 'created_at']
-        );
+        $q = $this->query();
 
-        return $query->paginate($perPage);
+        if (!empty($query['name'])) {
+            $q->where('name', 'like', '%' . $query['name'] . '%');
+        }
+        if (!empty($query['email'])) {
+            $q->where('email', 'like', '%' . $query['email'] . '%');
+        }
+        if (!empty($query['ids'])) {
+            $q->idIn($query['ids']);
+        }
+        if (!empty($query['exclude_ids'])) {
+            $q->idNotIn($query['exclude_ids']);
+        }
+        if (!empty($query['sort'])) {
+            foreach (explode(',', (string) $query['sort']) as $field) {
+                $dir = str_starts_with($field, '-') ? 'desc' : 'asc';
+                $field = ltrim($field, '-');
+                $q->orderBy($field, $dir);
+            }
+        }
+
+        return $q->paginate($perPage);
+    }
+
+    public function findManyByIds(array|string $ids): Collection
+    {
+        return $this->query()->idIn($ids)->get();
     }
 }

@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Contracts\Service\UserServiceInterface;
+use App\Services\UserService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -11,8 +13,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Example: bind concrete repositories/services here when created
-        // $this->app->bind(\App\Contracts\Repository\RepositoryInterface::class, \App\Repositories\UserRepository::class);
+        // Bind user service interface to implementation
+        $this->app->bind(UserServiceInterface::class, UserService::class);
     }
 
     /**

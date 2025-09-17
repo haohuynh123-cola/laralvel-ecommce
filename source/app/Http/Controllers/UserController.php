@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\User\UserStoreRequest;
+use App\Http\Requests\User\UserIndexRequest;
 use App\Http\Requests\User\UserUpdateRequest;
 use App\Http\Resources\PaginatedResource;
 use App\Http\Resources\UserResource;
@@ -14,9 +15,10 @@ class UserController extends Controller
 {
     public function __construct(private readonly UserService $service) {}
 
-    public function index(Request $request): JsonResponse
+    public function index(UserIndexRequest $request): JsonResponse
     {
-        $paginator = $this->service->paginateWithRequest($request, (int) $request->integer('per_page', 15));
+        $query = $request->validated();
+        $paginator = $this->service->listUsers($query, (int) data_get($request, 'per_page', 15));
         $collection = UserResource::collection($paginator->getCollection());
         return response()->json(
             PaginatedResource::make($collection, $paginator, $request)
